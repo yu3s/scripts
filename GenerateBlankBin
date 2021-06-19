@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if [ $# -lt 1 ]; then
+    echo -e "\033[31mError Parameter counts:$#, exit\033[0m"
+    exit
+elif [ $# -eq 2 ]; then
+    tmp=`echo "obase=8;ibase=16;$2" | bc`
+    character=`echo "\\\\$tmp"`
+else
+    character='\377'
+fi
+
+filename=`echo blank_$1.bin`
+
+block_size=4096
+block_counts=`expr $1 / $block_size`
+remaining_size=`expr $1 % $block_size`
+
+tr '\000' $character < /dev/zero | dd of=$filename bs=$block_size count=$block_counts
+
+if [ $remaining_size -gt 0 ]; then
+    tr '\000' $character < /dev/zero | dd of=$filename bs=$remaining_size count=1 oflag=append conv=notrunc
+fi

@@ -1,0 +1,36 @@
+#!/bin/bash
+
+function Search(){
+	for file in `ls $1`
+	do
+		if [ -d $1"/"$file ];then
+			Search $1/$file
+		else
+			suffix=${file#*.}
+			if [ $suffix == "so" ] || [ $suffix == "a" ];then
+				eval "nm $1/$file 2>/dev/null | awk -v sym=$symbol -v fun=$funcName '$statement'"
+				if [ $? -eq 7 ];then
+					echo $1/$file
+				fi
+			fi
+		fi
+	done
+}
+
+if [ $# -ne 3 ];then
+	echo "usage: " $0 "path flag symbol"
+	exit -1
+fi
+
+if [ $2 == 'T' ];then
+	statement='{if($2==sym&&$3==fun){exit 7}}'
+elif [ $2 == 'U' ];then
+	statement='{if($1==sym&&$2==fun){exit 7}}'
+else
+	exit -1
+fi
+
+symbol=$2
+funcName=$3
+
+Search ${1%/*}
